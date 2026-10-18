@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { t } from './i18n';
 
 type Question = { title: string; message: string; confirmLabel?: string };
 const Confirmation = createContext<(question: Question) => Promise<boolean>>(async () => false);
@@ -38,8 +39,8 @@ export function ConfirmationProvider({ children }: { children: ReactNode }) {
   return <Confirmation.Provider value={ask}>{children}{question ? <div className="dialog-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) choose(false); }}>
     <section ref={dialog} className="game-dialog" role="dialog" aria-modal="true" aria-label={question.title}>
       <h2>{question.title}</h2><p>{question.message}</p>
-      <div className="dialog-actions"><button className="secondary" data-gamepad-cancel onClick={() => choose(false)}>Cancel</button>
-        <button className="primary" onClick={() => choose(true)}>{question.confirmLabel ?? 'Continue'}</button></div>
+      <div className="dialog-actions"><button className="secondary" data-gamepad-cancel onClick={() => choose(false)}>{t('common.cancel', 'Cancel')}</button>
+        <button className="primary" onClick={() => choose(true)}>{question.confirmLabel ?? t('common.continue', 'Continue')}</button></div>
     </section>
   </div> : null}</Confirmation.Provider>;
 }

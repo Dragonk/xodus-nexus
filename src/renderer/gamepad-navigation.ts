@@ -1,3 +1,5 @@
+import { t } from './i18n';
+
 export type Direction = 'up' | 'down' | 'left' | 'right';
 export type PadAction = Direction | 'accept' | 'back' | 'options' | 'previous-page' | 'next-page';
 type Rect = Pick<DOMRect, 'left' | 'right' | 'top' | 'bottom'>;
@@ -203,7 +205,7 @@ export function installGamepadNavigation(win: Window, options: Options): () => v
     dialog.className = 'gamepad-select-dialog';
     dialog.setAttribute('role', 'dialog'); dialog.setAttribute('aria-modal', 'true');
     const title = doc.createElement('h2');
-    title.textContent = select.getAttribute('aria-label') ?? select.labels?.[0]?.childNodes[0]?.textContent ?? 'Choose an option';
+    title.textContent = select.getAttribute('aria-label') ?? select.labels?.[0]?.childNodes[0]?.textContent ?? t('common.chooseAnOption', 'Choose an option');
     dialog.setAttribute('aria-label', title.textContent);
     dialog.append(title);
     const choose = (value: string) => {
@@ -224,7 +226,7 @@ export function installGamepadNavigation(win: Window, options: Options): () => v
       dialog.append(button);
     }
     const cancel = doc.createElement('button');
-    cancel.type = 'button'; cancel.textContent = 'Cancel'; cancel.setAttribute('data-gamepad-cancel', '');
+    cancel.type = 'button'; cancel.textContent = t('common.cancel', 'Cancel'); cancel.setAttribute('data-gamepad-cancel', '');
     cancel.addEventListener('click', () => closePicker(true));
     dialog.append(cancel); backdrop.append(dialog); doc.body.append(backdrop);
     backdrop.addEventListener('pointerdown', event => { if (event.target === backdrop) closePicker(false); });

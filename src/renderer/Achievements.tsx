@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check, Eye, LoaderCircle, LockKeyhole, RefreshCw, Trophy, X } from 'lucide-react';
 import type { AppSnapshot, GameAchievement, GameAchievements } from '../shared/types';
 import './achievements.css';
+import { t } from './i18n';
 
 export type AchievementFilter = 'all' | 'unlocked' | 'locked';
 export function achievementList(items: GameAchievement[], filter: AchievementFilter): GameAchievement[] {
@@ -23,11 +24,11 @@ export function AchievementCard({ item }: { item: GameAchievement }) {
   const date = item.unlockedAt ? new Date(item.unlockedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : undefined;
   return <li className={`achievement-card ${item.state}`} data-gamepad-card tabIndex={hidden ? -1 : 0}>
     <div className="achievement-icon">{!hidden && item.iconUrl && !failed ? <img src={item.iconUrl} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} /> : <Trophy />}</div>
-    <div className="achievement-copy"><div className="achievement-title"><h3>{hidden ? 'Secret achievement' : item.name}</h3>{item.gamerscore !== undefined ? <span>{item.gamerscore} G</span> : null}</div>
-      <p>{hidden ? 'Reveal the details only if you want to see spoilers.' : item.description}</p>
-      <small>{item.state === 'unlocked' ? <><Check />Unlocked{date ? ` · ${date}` : ''}</> : <><LockKeyhole />{item.revoked ? 'Revoked' : item.state === 'in-progress' ? 'In progress' : 'Locked'}</>}</small>
-      {!hidden && item.progress !== undefined && item.state !== 'unlocked' ? <div className="achievement-progress"><progress max={100} value={item.progress} aria-label="Achievement progress" /><span>{Math.floor(item.progress)}%</span></div> : null}
-      {hidden ? <button className="gd-text-button" onClick={() => setRevealed(true)}><Eye />Reveal details</button> : null}
+    <div className="achievement-copy"><div className="achievement-title"><h3>{hidden ? t('achievements.secret', 'Secret achievement') : item.name}</h3>{item.gamerscore !== undefined ? <span>{item.gamerscore} G</span> : null}</div>
+      <p>{hidden ? t('achievements.secretHint', 'Reveal the details only if you want to see spoilers.') : item.description}</p>
+      <small>{item.state === 'unlocked' ? <><Check />{t('achievements.unlocked', 'Unlocked')}{date ? ` · ${date}` : ''}</> : <><LockKeyhole />{item.revoked ? t('achievements.revoked', 'Revoked') : item.state === 'in-progress' ? t('achievements.inProgress', 'In progress') : t('achievements.locked', 'Locked')}</>}</small>
+      {!hidden && item.progress !== undefined && item.state !== 'unlocked' ? <div className="achievement-progress"><progress max={100} value={item.progress} aria-label={t('achievements.progressLabel', 'Achievement progress')} /><span>{Math.floor(item.progress)}%</span></div> : null}
+      {hidden ? <button className="gd-text-button" onClick={() => setRevealed(true)}><Eye />{t('achievements.reveal', 'Reveal details')}</button> : null}
     </div>
   </li>;
 }
@@ -52,21 +53,21 @@ export function AchievementsDialog({ title, value, close }: { title: string; val
   }, []);
   return <div className="achievements-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) close(); }}>
     <section ref={ref} className="achievements-dialog" role="dialog" aria-modal="true" aria-labelledby="achievements-title">
-      <header><div><h2 id="achievements-title">Achievements</h2><p>{title}</p></div><button className="secondary" data-gamepad-cancel onClick={close}><X />Close<span className="gd-controller-hint" aria-hidden="true">B</span></button></header>
-      <label className="achievements-filter">Show<select aria-label="Filter achievements" value={filter} onChange={event => setFilter(event.target.value as AchievementFilter)}><option value="all">All achievements</option><option value="unlocked">Unlocked</option><option value="locked">Locked</option></select></label>
-      {value.partial ? <p className="achievements-warning">Only part of the achievement list is available. Counts describe loaded achievements.</p> : null}
-      <ul className="achievements-list" aria-label="Achievements">{items.map(item => <AchievementCard key={item.id} item={item} />)}</ul>
-      {!items.length ? <p className="achievements-empty">No achievements match this filter.</p> : null}
+      <header><div><h2 id="achievements-title">{t('achievements.title', 'Achievements')}</h2><p>{title}</p></div><button className="secondary" data-gamepad-cancel onClick={close}><X />{t('common.close', 'Close')}<span className="gd-controller-hint" aria-hidden="true">B</span></button></header>
+      <label className="achievements-filter">{t('achievements.filterShow', 'Show')}<select aria-label={t('achievements.filterLabel', 'Filter achievements')} value={filter} onChange={event => setFilter(event.target.value as AchievementFilter)}><option value="all">{t('achievements.filterAll', 'All achievements')}</option><option value="unlocked">{t('achievements.unlocked', 'Unlocked')}</option><option value="locked">{t('achievements.locked', 'Locked')}</option></select></label>
+      {value.partial ? <p className="achievements-warning">{t('achievements.partialWarning', 'Only part of the achievement list is available. Counts describe loaded achievements.')}</p> : null}
+      <ul className="achievements-list" aria-label={t('achievements.title', 'Achievements')}>{items.map(item => <AchievementCard key={item.id} item={item} />)}</ul>
+      {!items.length ? <p className="achievements-empty">{t('achievements.noMatch', 'No achievements match this filter.')}</p> : null}
     </section>
   </div>;
 }
 
 function statusText(value?: GameAchievements): string {
   switch (value?.status) {
-    case 'signed-out': return 'Sign in to view your Xbox achievements.';
-    case 'unsupported': return 'Update the backend to read Xbox achievements.';
-    case 'error': return 'Xbox achievements could not be loaded. Try refreshing.';
-    default: return 'No Xbox achievements are available for this game.';
+    case 'signed-out': return t('achievements.statusSignedOut', 'Sign in to view your Xbox achievements.');
+    case 'unsupported': return t('achievements.statusUnsupported', 'Update the backend to read Xbox achievements.');
+    case 'error': return t('achievements.statusError', 'Xbox achievements could not be loaded. Try refreshing.');
+    default: return t('achievements.statusNone', 'No Xbox achievements are available for this game.');
   }
 }
 
@@ -75,13 +76,13 @@ export function AchievementsContent({ title, value, loading, refresh }: { title:
   useEffect(() => { if (value?.status !== 'available') setOpen(false); }, [value?.status]);
   const items = value?.status === 'available' ? value.items ?? [] : [];
   const summary = achievementSummary(items);
-  return <section className="game-achievements" aria-label="Xbox achievements" aria-busy={loading}>
-    <header><div><h2><Trophy />Achievements</h2>{items.length ? <p>{value?.partial ? `${summary.earned} unlocked in ${summary.count} loaded` : `${summary.earned} / ${summary.count} unlocked`}{summary.score ? ` · ${summary.score}` : ''}</p> : null}</div><div className="button-row"><button className="gd-text-button" disabled={loading} onClick={refresh} aria-label="Refresh Xbox achievements">{loading ? <LoaderCircle className="spin" /> : <RefreshCw />}Refresh</button>{items.length ? <button className="secondary" onClick={() => setOpen(true)}>View all {items.length}</button> : null}</div></header>
-    {loading && !value ? <p className="achievements-empty">Loading Xbox achievements…</p> : !items.length ? <p className="achievements-empty">{value?.partial ? 'The achievement list is incomplete. Try refreshing.' : statusText(value)}</p> : <>
-      {value?.partial ? <p className="achievements-warning">Incomplete list. Counts and Gamerscore describe loaded achievements only.</p> : null}
-      <ul className="achievements-preview" aria-label="Recent achievements">{achievementList(items, 'all').slice(0, 3).map(item => <AchievementCard key={item.id} item={item} />)}</ul>
+  return <section className="game-achievements" aria-label={t('achievements.sectionLabel', 'Xbox achievements')} aria-busy={loading}>
+    <header><div><h2><Trophy />{t('achievements.title', 'Achievements')}</h2>{items.length ? <p>{value?.partial ? t('achievements.summaryPartial', '{earned} unlocked in {count} loaded', { earned: summary.earned, count: summary.count }) : t('achievements.summary', '{earned} / {count} unlocked', { earned: summary.earned, count: summary.count })}{summary.score ? ` · ${summary.score}` : ''}</p> : null}</div><div className="button-row"><button className="gd-text-button" disabled={loading} onClick={refresh} aria-label={t('achievements.refreshLabel', 'Refresh Xbox achievements')}>{loading ? <LoaderCircle className="spin" /> : <RefreshCw />}{t('common.refresh', 'Refresh')}</button>{items.length ? <button className="secondary" onClick={() => setOpen(true)}>{t('achievements.viewAll', 'View all {count}', { count: items.length })}</button> : null}</div></header>
+    {loading && !value ? <p className="achievements-empty">{t('achievements.loading', 'Loading Xbox achievements…')}</p> : !items.length ? <p className="achievements-empty">{value?.partial ? t('achievements.partialRetry', 'The achievement list is incomplete. Try refreshing.') : statusText(value)}</p> : <>
+      {value?.partial ? <p className="achievements-warning">{t('achievements.incompleteWarning', 'Incomplete list. Counts and Gamerscore describe loaded achievements only.')}</p> : null}
+      <ul className="achievements-preview" aria-label={t('achievements.recentLabel', 'Recent achievements')}>{achievementList(items, 'all').slice(0, 3).map(item => <AchievementCard key={item.id} item={item} />)}</ul>
     </>}
-    <p className="achievements-footnote">From Xbox. Availability and progress may vary by game. This view never unlocks or updates achievements.</p>
+    <p className="achievements-footnote">{t('achievements.footnote', 'From Xbox. Availability and progress may vary by game. This view never unlocks or updates achievements.')}</p>
     {open && value?.status === 'available' ? <AchievementsDialog title={title} value={value} close={() => setOpen(false)} /> : null}
   </section>;
 }

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ArrowLeft, Check, ChevronLeft, ChevronRight, Clock3, Gamepad2, Images, LoaderCircle, MoreHorizontal, RefreshCw, X } from 'lucide-react';
 import type { AppSnapshot, Game, GameActivity, GameStoreDetails } from '../shared/types';
+import { t } from './i18n';
 import './game-details.css';
 import { Achievements } from './Achievements';
 
 export function formatMinutes(minutes?: number): string {
-  if (minutes === undefined || !Number.isFinite(minutes) || minutes < 0) return 'Unavailable';
+  if (minutes === undefined || !Number.isFinite(minutes) || minutes < 0) return t('activity.unavailable', 'Unavailable');
   if (minutes === 0) return '0 min';
   if (minutes < 1) return '<1 min';
   const hours = Math.floor(minutes / 60), remainder = Math.floor(minutes % 60);
@@ -14,18 +15,18 @@ export function formatMinutes(minutes?: number): string {
 
 function activityNote(activity?: GameActivity): string {
   switch (activity?.status) {
-    case 'signed-out': return 'Sign in to view Xbox activity.';
-    case 'unsupported': return 'Update the backend to read Xbox activity.';
-    case 'error': return 'Xbox activity could not be loaded. Try refreshing.';
-    case 'unavailable': return 'Xbox has no activity available for this game.';
-    default: return activity?.partial ? 'Some Xbox activity could not be retrieved.' : 'From Xbox';
+    case 'signed-out': return t('activity.signInToView', 'Sign in to view Xbox activity.');
+    case 'unsupported': return t('activity.updateBackend', 'Update the backend to read Xbox activity.');
+    case 'error': return t('activity.loadError', 'Xbox activity could not be loaded. Try refreshing.');
+    case 'unavailable': return t('activity.noActivity', 'Xbox has no activity available for this game.');
+    default: return activity?.partial ? t('activity.partial', 'Some Xbox activity could not be retrieved.') : t('activity.fromXbox', 'From Xbox');
   }
 }
 
 function Artwork({ src, alt, ...props }: { src?: string; alt: string; className?: string; loading?: 'lazy' }) {
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [src]);
-  return src && !failed ? <img src={src} alt={alt} {...props} referrerPolicy="no-referrer" onError={() => setFailed(true)} /> : <span className="gd-artwork-unavailable"><Gamepad2 /><span>{alt || 'Artwork unavailable'}</span></span>;
+  return src && !failed ? <img src={src} alt={alt} {...props} referrerPolicy="no-referrer" onError={() => setFailed(true)} /> : <span className="gd-artwork-unavailable"><Gamepad2 /><span>{alt || t('common.artworkUnavailable', 'Artwork unavailable')}</span></span>;
 }
 
 export function Gallery({ title, images, initial, close }: { title: string; images: string[]; initial: number; close: () => void }) {
@@ -47,10 +48,10 @@ export function Gallery({ title, images, initial, close }: { title: string; imag
     return () => { document.removeEventListener('keydown', key); if (origin?.isConnected) origin.focus({ preventScroll: true }); };
   }, [images.length]);
   return <div className="gd-lightbox-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) close(); }}>
-    <section ref={ref} className="gd-lightbox" role="dialog" aria-modal="true" aria-label={`${title} screenshots`} data-gamepad-gallery="">
-      <header><span>{title}<small aria-live="polite">{index + 1} / {images.length} · Microsoft Store</small></span><button className="secondary gd-gallery-close" data-gamepad-cancel aria-label="Close gallery" onClick={close}><X />Close<span className="gd-controller-hint" aria-hidden="true">B</span></button></header>
-      <div className="gd-lightbox-image"><Artwork src={images[index]} alt={`${title} screenshot ${index + 1}`} /></div>
-      <footer><button className="secondary" data-gamepad-gallery-previous aria-label="Previous screenshot" onClick={() => setIndex(i => (i - 1 + images.length) % images.length)}><span className="gd-controller-hint" aria-hidden="true">L1</span><ChevronLeft />Previous</button><button className="secondary" data-gamepad-gallery-next aria-label="Next screenshot" onClick={() => setIndex(i => (i + 1) % images.length)}>Next<ChevronRight /><span className="gd-controller-hint" aria-hidden="true">R1</span></button></footer>
+    <section ref={ref} className="gd-lightbox" role="dialog" aria-modal="true" aria-label={t('details.screenshotsLabel', '{title} screenshots', { title })} data-gamepad-gallery="">
+      <header><span>{title}<small aria-live="polite">{index + 1} / {images.length} · Microsoft Store</small></span><button className="secondary gd-gallery-close" data-gamepad-cancel aria-label={t('details.closeGallery', 'Close gallery')} onClick={close}><X />{t('common.close', 'Close')}<span className="gd-controller-hint" aria-hidden="true">B</span></button></header>
+      <div className="gd-lightbox-image"><Artwork src={images[index]} alt={t('details.screenshotAlt', '{title} screenshot {index}', { title, index: index + 1 })} /></div>
+      <footer><button className="secondary" data-gamepad-gallery-previous aria-label={t('details.previousScreenshot', 'Previous screenshot')} onClick={() => setIndex(i => (i - 1 + images.length) % images.length)}><span className="gd-controller-hint" aria-hidden="true">L1</span><ChevronLeft />{t('details.previous', 'Previous')}</button><button className="secondary" data-gamepad-gallery-next aria-label={t('details.nextScreenshot', 'Next screenshot')} onClick={() => setIndex(i => (i + 1) % images.length)}>{t('details.next', 'Next')}<ChevronRight /><span className="gd-controller-hint" aria-hidden="true">R1</span></button></footer>
     </section>
   </div>;
 }
@@ -88,7 +89,7 @@ export function GameDetailsContent({ game, back, play, manage, notices, technica
   const description = details?.description ?? '';
   const shortDescription = description.split(/\r?\n\s*\r?\n/)[0];
   const release = details?.releaseDate && Number.isFinite(Date.parse(details.releaseDate)) ? new Date(details.releaseDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : undefined;
-  const lastPlayed = activity?.lastPlayed && Number.isFinite(Date.parse(activity.lastPlayed)) ? new Date(activity.lastPlayed).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'Unavailable';
+  const lastPlayed = activity?.lastPlayed && Number.isFinite(Date.parse(activity.lastPlayed)) ? new Date(activity.lastPlayed).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : t('activity.unavailable', 'Unavailable');
   useEffect(() => {
     const escape = (event: KeyboardEvent) => {
       if (event.key !== 'Escape' || document.querySelector('[role="dialog"][aria-modal="true"]')) return;
@@ -100,29 +101,29 @@ export function GameDetailsContent({ game, back, play, manage, notices, technica
     return () => { window.removeEventListener('keydown', escape); document.removeEventListener('pointerdown', outside); };
   }, [back]);
   return <section className="game-details-page" data-gamepad-detail={game.id}>
-    <div className="gd-back-row"><button className="gd-back" data-gamepad-detail-back onClick={back}><ArrowLeft />Back to library<span className="gd-back-hint" aria-hidden="true">B</span></button></div>
+    <div className="gd-back-row"><button className="gd-back" data-gamepad-detail-back onClick={back}><ArrowLeft />{t('details.backToLibrary', 'Back to library')}<span className="gd-back-hint" aria-hidden="true">B</span></button></div>
     <section className="gd-hero">
       <Artwork className="gd-hero-art" src={details?.heroUrl ?? game.heroUrl ?? game.coverUrl} alt="" />
       <div className="gd-hero-shade" />
-      <div className="gd-hero-copy"><span className={`gd-ready ${game.installState}`}><Check />{game.installState === 'ready' ? 'Installed' : game.installState === 'incomplete' ? 'Incomplete' : 'Imported'}</span><h1>{game.title}</h1><p>{details?.publisher ?? game.publisher ?? 'Publisher not provided'}</p><div className="gd-tags">{details?.categories.map(category => <span key={category}>{category}</span>)}</div></div>
+      <div className="gd-hero-copy"><span className={`gd-ready ${game.installState}`}><Check />{game.installState === 'ready' ? t('common.installed', 'Installed') : game.installState === 'incomplete' ? t('library.incomplete', 'Incomplete') : t('library.imported', 'Imported')}</span><h1>{game.title}</h1><p>{details?.publisher ?? game.publisher ?? t('game.publisherNotProvided', 'Publisher not provided')}</p><div className="gd-tags">{details?.categories.map(category => <span key={category}>{category}</span>)}</div></div>
     </section>
     <div className="gd-page-content">
-      <section className="gd-play-row" data-gamepad-action-row aria-label="Game actions and activity">
+      <section className="gd-play-row" data-gamepad-action-row aria-label={t('details.actionsAria', 'Game actions and activity')}>
         <div className="button-row gd-play-controls">{play}</div>
-        <div className="gd-stat"><Clock3 /><div><span>Xbox time played <button className="gd-refresh" aria-label="Refresh Xbox activity" disabled={activityLoading} onClick={refresh}>{activityLoading ? <LoaderCircle className="spin" /> : <RefreshCw />}</button></span><strong>{activityLoading && !activity ? 'Loading…' : formatMinutes(activity?.minutesPlayed)}</strong><small>{activityLoading ? 'Reading Xbox activity…' : activityNote(activity)}</small></div></div>
-        <div className="gd-stat gd-last-played"><div><span>Last played</span><strong>{activityLoading && !activity ? 'Loading…' : lastPlayed}</strong></div></div>
-        <details ref={manageRef} className="gd-actions" data-game-menu={manageOpen ? '' : undefined} onToggle={event => setManageOpen(event.currentTarget.open)}><summary aria-label="More game actions"><MoreHorizontal /><span>Manage</span></summary><div onClick={event => { if ((event.target as HTMLElement).closest('button:not(:disabled)')) closeManage(); }}>{manage}</div></details>
+        <div className="gd-stat"><Clock3 /><div><span>{t('details.timePlayed', 'Xbox time played')} <button className="gd-refresh" aria-label={t('details.refreshActivity', 'Refresh Xbox activity')} disabled={activityLoading} onClick={refresh}>{activityLoading ? <LoaderCircle className="spin" /> : <RefreshCw />}</button></span><strong>{activityLoading && !activity ? t('common.loading', 'Loading…') : formatMinutes(activity?.minutesPlayed)}</strong><small>{activityLoading ? t('details.readingActivity', 'Reading Xbox activity…') : activityNote(activity)}</small></div></div>
+        <div className="gd-stat gd-last-played"><div><span>{t('details.lastPlayed', 'Last played')}</span><strong>{activityLoading && !activity ? t('common.loading', 'Loading…') : lastPlayed}</strong></div></div>
+        <details ref={manageRef} className="gd-actions" data-game-menu={manageOpen ? '' : undefined} onToggle={event => setManageOpen(event.currentTarget.open)}><summary aria-label={t('details.moreActions', 'More game actions')}><MoreHorizontal /><span>{t('details.manage', 'Manage')}</span></summary><div onClick={event => { if ((event.target as HTMLElement).closest('button:not(:disabled)')) closeManage(); }}>{manage}</div></details>
       </section>
       {notices}
       {achievements}
       <div className="gd-detail-columns">
         <div className="gd-description-column">
-          <section className="gd-about"><h2>About the game</h2><p>{metadataLoading ? 'Loading game information…' : description ? expanded ? description : shortDescription : metadataError ? 'Game information could not be loaded. You can still play.' : 'Microsoft Store did not provide a description for this game.'}</p>{description !== shortDescription ? <button className="gd-text-button" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>{expanded ? 'Show less' : 'Read more'}<ChevronRight /></button> : null}</section>
-          <section className="gd-gallery"><header><h2>Screenshots</h2>{images.length ? <button className="gd-text-button" onClick={() => setGallery(0)}><Images />View all {images.length}</button> : null}</header><div>{images.slice(0, 4).map((url, index) => <button key={url} aria-label={`Open screenshot ${index + 1}`} onClick={() => setGallery(index)}><Artwork loading="lazy" src={url} alt={`${game.title} screenshot ${index + 1}`} /></button>)}</div>{!images.length ? <p className="gd-empty">{metadataLoading ? 'Loading screenshots…' : 'No screenshots available.'}</p> : null}</section>
+          <section className="gd-about"><h2>{t('details.about', 'About the game')}</h2><p>{metadataLoading ? t('details.loadingInfo', 'Loading game information…') : description ? expanded ? description : shortDescription : metadataError ? t('details.infoError', 'Game information could not be loaded. You can still play.') : t('details.noDescription', 'Microsoft Store did not provide a description for this game.')}</p>{description !== shortDescription ? <button className="gd-text-button" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>{expanded ? t('details.showLess', 'Show less') : t('details.readMore', 'Read more')}<ChevronRight /></button> : null}</section>
+          <section className="gd-gallery"><header><h2>{t('details.screenshots', 'Screenshots')}</h2>{images.length ? <button className="gd-text-button" onClick={() => setGallery(0)}><Images />{t('details.viewAll', 'View all {count}', { count: images.length })}</button> : null}</header><div>{images.slice(0, 4).map((url, index) => <button key={url} aria-label={t('details.openScreenshot', 'Open screenshot {index}', { index: index + 1 })} onClick={() => setGallery(index)}><Artwork loading="lazy" src={url} alt={t('details.screenshotAlt', '{title} screenshot {index}', { title: game.title, index: index + 1 })} /></button>)}</div>{!images.length ? <p className="gd-empty">{metadataLoading ? t('details.loadingScreenshots', 'Loading screenshots…') : t('details.noScreenshots', 'No screenshots available.')}</p> : null}</section>
         </div>
-        <aside className="gd-facts"><h2>Game information</h2><dl><div><dt>Publisher</dt><dd>{details?.publisher ?? game.publisher ?? 'Unavailable'}</dd></div><div><dt>Release date</dt><dd>{release ?? 'Unavailable'}</dd></div><div><dt>Categories</dt><dd>{details?.categories.length ? details.categories.join(' · ') : 'Unavailable'}</dd></div>{details ? <div><dt>Metadata source</dt><dd>Microsoft Store</dd></div> : null}</dl><details><summary>Installation details</summary>{technical}</details></aside>
+        <aside className="gd-facts"><h2>{t('details.gameInformation', 'Game information')}</h2><dl><div><dt>{t('details.publisher', 'Publisher')}</dt><dd>{details?.publisher ?? game.publisher ?? t('activity.unavailable', 'Unavailable')}</dd></div><div><dt>{t('details.releaseDate', 'Release date')}</dt><dd>{release ?? t('activity.unavailable', 'Unavailable')}</dd></div><div><dt>{t('details.categories', 'Categories')}</dt><dd>{details?.categories.length ? details.categories.join(' · ') : t('activity.unavailable', 'Unavailable')}</dd></div>{details ? <div><dt>{t('details.metadataSource', 'Metadata source')}</dt><dd>Microsoft Store</dd></div> : null}</dl><details><summary>{t('details.installationDetails', 'Installation details')}</summary>{technical}</details></aside>
       </div>
-      <p className="gd-disclaimer">Xbox activity may be delayed or unavailable for some games. Local session time is not added to the Xbox total.</p>
+      <p className="gd-disclaimer">{t('details.activityDisclaimer', 'Xbox activity may be delayed or unavailable for some games. Local session time is not added to the Xbox total.')}</p>
     </div>
     {gallery !== undefined && images.length ? <Gallery title={game.title} images={images} initial={gallery} close={() => setGallery(undefined)} /> : null}
   </section>;

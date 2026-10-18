@@ -1,8 +1,9 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { InstallPlan, InstallRequest } from '../shared/types';
+import { t } from './i18n';
 
 type Install = (request: InstallRequest) => Promise<string | undefined>;
-const InstallContext = createContext<Install>(async () => { throw Error('Installation dialog is unavailable.'); });
+const InstallContext = createContext<Install>(async () => { throw Error(t('package.dialogUnavailable', 'Installation dialog is unavailable.')); });
 export const usePackageInstall = () => useContext(InstallContext);
 
 export function PackageDialog({ plan, choose }: { plan: InstallPlan; choose: (id?: string) => void }) {
@@ -14,13 +15,13 @@ export function PackageDialog({ plan, choose }: { plan: InstallPlan; choose: (id
   }, [choose]);
   return <div className="dialog-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) choose(); }}>
     <section className="game-dialog package-dialog" role="dialog" aria-modal="true" aria-labelledby="package-dialog-title">
-      <h2 id="package-dialog-title">Choose files to install</h2>
-      <p>Choose the package you want to install from this Store offer. Xodus checks your license before downloading.</p>
-      <div className="package-choices">{plan.choices.map(item => <label className={`package-choice${item.supported ? '' : ' unsupported'}`} key={`${item.productId}:${item.contentId}`}>
+      <h2 id="package-dialog-title">{t('package.title', 'Choose files to install')}</h2>
+      <p>{t('package.intro', 'Choose the package you want to install from this Store offer. Xodus checks your license before downloading.')}</p>
+      <div className="package-choices">{plan.choices.map(item => <label className={`package-choice${item.supported ? '' : ' unsupported'}`} key={item.productId + ':' + item.contentId}>
         <input type="radio" name="install-package" value={item.contentId} disabled={!item.supported} checked={selected === item.contentId} onChange={() => setSelected(item.contentId)} />
-        <span><strong>{item.title}</strong><small>{item.platform || 'Unknown platform'} · {item.packageFormat || 'Unknown format'}{item.kind === 'GameAddOn' ? ' · Add-on' : ''}{!item.supported ? ' · Unsupported' : ''}</small><small>Store ID {item.productId}</small><small className="package-content-id">Package {item.contentId}</small></span>
+        <span><strong>{item.title}</strong><small>{item.platform || t('package.unknownPlatform', 'Unknown platform')} · {item.packageFormat || t('package.unknownFormat', 'Unknown format')}{item.kind === 'GameAddOn' ? ' · ' + t('package.addOn', 'Add-on') : ''}{!item.supported ? ' · ' + t('store.unsupported', 'Unsupported') : ''}</small><small>{t('common.storeId', 'Store ID {id}', { id: item.productId })}</small><small className="package-content-id">{t('package.packageId', 'Package {id}', { id: item.contentId })}</small></span>
       </label>)}</div>
-      <div className="dialog-actions"><button className="secondary" data-gamepad-cancel onClick={() => choose()}>Cancel</button><button className="primary" disabled={!selected} onClick={() => choose(selected)}>Install selected package</button></div>
+      <div className="dialog-actions"><button className="secondary" data-gamepad-cancel onClick={() => choose()}>{t('common.cancel', 'Cancel')}</button><button className="primary" disabled={!selected} onClick={() => choose(selected)}>{t('package.installSelected', 'Install selected package')}</button></div>
     </section>
   </div>;
 }
@@ -33,12 +34,12 @@ export function PackageInstallProvider({ children }: { children: ReactNode }) {
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; pending.current?.(); }; }, []);
   function choose(id?: string) { pending.current?.(id); pending.current = undefined; setPlan(undefined); }
   const install: Install = async request => {
-    if (busy.current) throw Error('Finish the current package selection first.');
+    if (busy.current) throw Error(t('package.finishCurrent', 'Finish the current package selection first.'));
     busy.current = true;
     try {
       const result = await window.launcher.getInstallPlan(request.productId);
       if (!mounted.current) return;
-      if (result.status === 'unavailable') throw Error('No supported Windows.Desktop MSIXVC package was found for this Store offer.');
+      if (result.status === 'unavailable') throw Error(t('package.noPackage', 'No supported Windows.Desktop MSIXVC package was found for this Store offer.'));
       const selected = result.status === 'ready' ? result.choices.find(item => item.supported)!.contentId
         : await new Promise<string | undefined>(resolve => { pending.current = resolve; setPlan(result); });
       if (!selected || !mounted.current) return;

@@ -21,7 +21,7 @@ import { downloadVerifiedVcRedist, installedVcRuntimeVersion, VC_REDIST_VERSION,
 import { assertGameRemovalAvailable, validateGameDeleteTarget } from './game-removal.js';
 import { deleteGameDirectory } from './game-delete.js';
 import { spawnGameProcess, type GameProcess } from './game-process.js';
-import { gameLocaleEnvironment, manifestLocales, manifestTitleId, supportedGameLocale } from './game-locale.js';
+import { defaultGameLocale, gameLocaleEnvironment, manifestLocales, manifestTitleId, optionalGameLocale, supportedGameLocale } from './game-locale.js';
 import { antiCheatEnvironment } from './anti-cheat.js';
 import { gameLaunchArguments, preparedGameWine } from './game-launch.js';
 import { prepareGameWrapper, type GameWrapper } from './game-wrapper.js';
@@ -729,7 +729,12 @@ async function prepareGameLaunch(id: string): Promise<void> {
   emitSnapshot();
   const binary = requireBackend('run');
   if (inspected.installState !== 'ready') throw new Error(inspected.installMessage ?? 'The installation is not ready for Xodus run.');
-  const locale = supportedGameLocale(game.locale ?? '', await gameLocales(game));
+  // A per-game locale stays authoritative. Without one, a pinned launcher
+  // language requests the matching package language when the game ships it.
+  const manifestLanguages = await gameLocales(game);
+  const locale = game.locale
+    ? supportedGameLocale(game.locale, manifestLanguages)
+    : optionalGameLocale(defaultGameLocale(store.settings.language), manifestLanguages);
   const titleId = await gameTitleId(game);
   const wine = selectedWinePath(store.settings.winePath, store.settings.runtimeRoot, runtime.current.winePath);
   if (!wine) throw new Error('Select a Wine/Xodus Proton binary in Settings.');
@@ -1392,6 +1397,7 @@ function registerIpc(): void {
     if (typeof patch.externalXodusRoot === 'string') allowed.externalXodusRoot = path.resolve(patch.externalXodusRoot);
     if (typeof patch.runtimeRoot === 'string') allowed.runtimeRoot = path.resolve(patch.runtimeRoot);
     if (typeof patch.verboseLogs === 'boolean') allowed.verboseLogs = patch.verboseLogs;
+    if (typeof patch.language === 'string' && /^(?:en|pl|)$/.test(patch.language)) allowed.language = patch.language;
     if (typeof patch.firstRunCompleted === 'boolean') allowed.firstRunCompleted = patch.firstRunCompleted;
     const settings = await store.setSettings(allowed);
     backend.setExternalRoot(settings.externalXodusRoot);
