@@ -35,6 +35,21 @@ export function supportedGameLocale(requested: string, locales: string[]): strin
   throw new Error(`The game manifest does not declare ${requested}. Available languages: ${locales.join(', ') || 'none'}.`);
 }
 
+/** Preferred game package locale implied by the launcher UI language. An empty
+ * launcher language ("follow the system") keeps the previous behaviour: no
+ * requested locale, so the runtime default applies. */
+export function defaultGameLocale(language: string | undefined): string {
+  if (language === 'pl') return 'pl-PL';
+  if (language === 'en') return 'en-US';
+  return '';
+}
+
+/** Like supportedGameLocale, but falls back to undefined instead of throwing
+ * when the implied locale is not declared by the game manifest. */
+export function optionalGameLocale(requested: string, locales: string[]): string | undefined {
+  try { return supportedGameLocale(requested, locales); } catch { return undefined; }
+}
+
 export function gameLocaleEnvironment(source: NodeJS.ProcessEnv, locale?: string): NodeJS.ProcessEnv {
   if (!locale) return { ...source };
   const environment: NodeJS.ProcessEnv = { ...source, XODUS_PACKAGE_LOCALE: locale, WINEUSERLOCALE: locale };

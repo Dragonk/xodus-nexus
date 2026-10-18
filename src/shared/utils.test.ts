@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { downloadFailure, estimateTimeRemaining, isNewerVersion, parseBackendHelp, progressBytesFromLine, progressFromLine, safeProductId, stripAnsi } from './utils.js';
+import { downloadFailure, estimatedSecondsRemaining, isNewerVersion, parseBackendHelp, progressBytesFromLine, progressFromLine, safeProductId, stripAnsi } from './utils.js';
 
 describe('parseBackendHelp', () => {
   it('negotiates the dedicated sign-in UI only when advertised', () => {
@@ -40,24 +40,24 @@ describe('version comparison', () => {
 describe('estimated time remaining', () => {
   it('estimates from binary and decimal transfer rates', () => {
     // 25_646_186_496 bytes left at 86.4 MiB/s ≈ 283 seconds.
-    expect(estimateTimeRemaining('86.4 MiB/s', 18_612_245_504, 44_258_432_000)).toBe('~5m left');
+    expect(estimatedSecondsRemaining('86.4 MiB/s', 18_612_245_504, 44_258_432_000)).toBe(283);
     // 900 KiB left at 3 KiB/s = 300 seconds.
-    expect(estimateTimeRemaining('3 KiB/s', 0, 921_600)).toBe('~5m left');
+    expect(estimatedSecondsRemaining('3 KiB/s', 0, 921_600)).toBe(300);
     // 480_000 bytes left at 1 KB/s = 480 seconds.
-    expect(estimateTimeRemaining('1 KB/s', 1000, 481_000)).toBe('~8m left');
+    expect(estimatedSecondsRemaining('1 KB/s', 1000, 481_000)).toBe(480);
     // 40 MiB left at 2 MiB/s = 20 seconds.
-    expect(estimateTimeRemaining('2 MiB/s', 10 * 1024 ** 2, 50 * 1024 ** 2)).toBe('~20s left');
+    expect(estimatedSecondsRemaining('2 MiB/s', 10 * 1024 ** 2, 50 * 1024 ** 2)).toBe(20);
     // A full 4 GiB download at 512 KiB/s = 8192 seconds.
-    expect(estimateTimeRemaining('512 KiB/s', 0, 4 * 1024 ** 3)).toBe('~2h 17m left');
+    expect(estimatedSecondsRemaining('512 KiB/s', 0, 4 * 1024 ** 3)).toBe(8192);
   });
 
   it('returns nothing without a usable rate or remaining bytes', () => {
-    expect(estimateTimeRemaining(undefined, 100, 200)).toBeUndefined();
-    expect(estimateTimeRemaining('12 MiB/s', null, 200)).toBeUndefined();
-    expect(estimateTimeRemaining('12 MiB/s', 200, null)).toBeUndefined();
-    expect(estimateTimeRemaining('0 MiB/s', 100, 200)).toBeUndefined();
-    expect(estimateTimeRemaining('12 parsecs/s', 100, 200)).toBeUndefined();
-    expect(estimateTimeRemaining('12 MiB/s', 200, 200)).toBeUndefined();
+    expect(estimatedSecondsRemaining(undefined, 100, 200)).toBeUndefined();
+    expect(estimatedSecondsRemaining('12 MiB/s', null, 200)).toBeUndefined();
+    expect(estimatedSecondsRemaining('12 MiB/s', 200, null)).toBeUndefined();
+    expect(estimatedSecondsRemaining('0 MiB/s', 100, 200)).toBeUndefined();
+    expect(estimatedSecondsRemaining('12 parsecs/s', 100, 200)).toBeUndefined();
+    expect(estimatedSecondsRemaining('12 MiB/s', 200, 200)).toBeUndefined();
   });
 });
 
