@@ -77,9 +77,10 @@ export function safeProductId(value: string): string {
   return normalized;
 }
 
-// Estimated time remaining for a download, derived from the transfer rate
+// Estimated seconds remaining for a download, derived from the transfer rate
 // Xodus reports (for example "86.4 MiB/s") and the byte counters.
-export function estimateTimeRemaining(transferRate: string | undefined, downloadedBytes: number | null | undefined, totalBytes: number | null | undefined): string | undefined {
+// Presentation (units, rounding) lives in the renderer so it can be localized.
+export function estimatedSecondsRemaining(transferRate: string | undefined, downloadedBytes: number | null | undefined, totalBytes: number | null | undefined): number | undefined {
   if (!transferRate || downloadedBytes == null || totalBytes == null) return undefined;
   const remaining = totalBytes - downloadedBytes;
   if (remaining <= 0) return undefined;
@@ -93,11 +94,5 @@ export function estimateTimeRemaining(transferRate: string | undefined, download
   if (!Number.isFinite(bytesPerSecond) || bytesPerSecond <= 0) return undefined;
   const seconds = remaining / bytesPerSecond;
   if (!Number.isFinite(seconds)) return undefined;
-  const rounded = Math.round(seconds);
-  if (rounded < 60) return `~${rounded}s left`;
-  const minutes = Math.round(rounded / 60);
-  if (minutes < 60) return `~${minutes}m left`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `~${hours}h ${minutes % 60}m left`;
-  return `~${Math.floor(hours / 24)}d ${hours % 24}h left`;
+  return Math.round(seconds);
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { gameLocaleEnvironment, manifestLocales, manifestTitleId, supportedGameLocale } from './game-locale.js';
+import { defaultGameLocale, gameLocaleEnvironment, manifestLocales, manifestTitleId, optionalGameLocale, supportedGameLocale } from './game-locale.js';
 
 describe('game locale', () => {
   it('ignores commented locale and title examples, including arrows and terminal escapes', () => {
@@ -51,5 +51,20 @@ describe('game locale', () => {
       LANGUAGE: 'cs_CZ:cs',
     });
     expect(original).toEqual({ LANG: 'en_US.UTF-8', LC_ALL: 'C.UTF-8' });
+  });
+});
+
+describe('launcher language as default game locale', () => {
+  it('maps pinned languages to package locales and keeps system default empty', () => {
+    expect(defaultGameLocale('pl')).toBe('pl-PL');
+    expect(defaultGameLocale('en')).toBe('en-US');
+    expect(defaultGameLocale('')).toBe('');
+    expect(defaultGameLocale(undefined)).toBe('');
+  });
+
+  it('requests the launcher language when the game declares it and falls back silently otherwise', () => {
+    expect(optionalGameLocale('pl-PL', ['en', 'pl-PL'])).toBe('pl-PL');
+    expect(optionalGameLocale('pl-PL', ['en', 'de'])).toBeUndefined();
+    expect(optionalGameLocale('', ['en'])).toBeUndefined();
   });
 });

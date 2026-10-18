@@ -169,6 +169,8 @@ export interface Settings {
   externalXodusRoot: string;
   runtimeRoot: string;
   verboseLogs: boolean;
+  // Launcher UI language: '' follows the operating system, 'en'/'pl' pin it.
+  language?: string;
   firstRunCompleted?: boolean;
 }
 
